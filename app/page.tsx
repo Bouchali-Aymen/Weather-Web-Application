@@ -1,95 +1,86 @@
-import Image from 'next/image'
+'use client'
 import styles from './page.module.css'
+import Search from './components/search'
+import './globals.css'
+import { SetStateAction, useState, useEffect , useRef} from 'react'
+import'./components/WeatherCard'
+import WeatherCard from './components/WeatherCard'
+import img from './assets/background.jpg'
 
+
+  
 export default function Home() {
+
+  //variables
+
+
+  const [city, setCity] = useState('');
+  const [data , setData] = useState([]);
+  const humidity = useRef(0);
+  const windspeed = useRef(0);
+  const temp = useRef(0);
+  const icon = useRef("");
+  const [weatherVisible,setWeatherVisible] = useState(false);
+  const [wrongcity,setwrongcity] = useState(false);
+  const [wicon,setWicon] = useState();
+
+
+  //Handle city name and weather card visibility
+
+  const handleOnSearchChange = (newCity: SetStateAction<string>,visible: SetStateAction<boolean>) => {
+    setCity(newCity)
+    setWeatherVisible(visible)
+  }
+  
+
+
+
+/* Api Call*/
+  useEffect(() => {
+    // Use the city state variable in the URL
+    if(city!==""){
+ fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=247b278aaf546d0ceeb3d228734c1dfd`)
+      
+      .then((response) =>{
+        if(response.status ===  404){
+          setWeatherVisible(false);
+          setwrongcity(true);
+          alert("invalid city name");
+          return;
+        }
+        setwrongcity(false);
+        return response.json();
+      }
+      )
+      .then((weatherData) => {
+        humidity.current = 0 
+        windspeed.current = 0 
+        temp.current = 0
+        icon.current = "";
+        console.log(weatherData);
+        humidity.current = humidity.current + weatherData.main.humidity;
+        windspeed.current = windspeed.current + weatherData.wind.speed;
+        temp.current = temp.current + weatherData.main.temp;
+        icon.current = weatherData.weather[0].icon;
+
+        console.log(typeof(weatherData));
+
+        setData(weatherData);
+      })
+      .catch((error) => console.error('Error fetching weather data:', error));
+    }
+   
+  }, [city]); // Run the effect when 'city' changes
+
+   
+
+
+  
   return (
-    <main className={styles.main}>
-      <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>app/page.tsx</code>
-        </p>
-        <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
-
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className={styles.grid}>
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p>Find in-depth information about Next.js features and API.</p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Learn <span>-&gt;</span>
-          </h2>
-          <p>Learn about Next.js in an interactive course with&nbsp;quizzes!</p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p>Explore the Next.js 13 playground.</p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
+    <div className='container' style={{backgroundImage: `url('${img}')`}}>
+      <Search OnSearchChange={handleOnSearchChange}/>
+      
+      <WeatherCard city={city} humidity={humidity.current} windspeed={windspeed.current} temp={temp.current} weatherVisible={weatherVisible} icon={icon.current}/>
+    </div>
   )
 }
